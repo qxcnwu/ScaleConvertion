@@ -38,7 +38,8 @@ class struct_getPoint:
         self.location_click = [0, 0]
         self.location_release = [0, 0]
         self.image_original = image.copy()
-        self.image_show = self.image_original[0: self.g_window_wh[1], 0:self.g_window_wh[0]]
+        self.image_show = self.image_original[0:
+                                              self.g_window_wh[1], 0:self.g_window_wh[0]]
         self.image_show = self.image_original
         self.location_win = [0, 0]
         self.location_win_click = [0, 0]
@@ -88,23 +89,26 @@ class struct_getPoint:
                         param.location_win = [0, 0]
                     elif w1 >= w2 and h1 < h2:
                         param.location_win[0] = param.location_win_click[0] + param.location_click[0] - \
-                                                param.location_release[0]
+                            param.location_release[0]
                     elif w1 < w2 and h1 >= h2:
                         param.location_win[1] = param.location_win_click[1] + param.location_click[1] - \
-                                                param.location_release[1]
+                            param.location_release[1]
                     else:
                         param.location_win[0] = param.location_win_click[0] + param.location_click[0] - \
-                                                param.location_release[0]
+                            param.location_release[0]
                         param.location_win[1] = param.location_win_click[1] + param.location_click[1] - \
-                                                param.location_release[1]
+                            param.location_release[1]
                     check_location([w1, h1], [w2, h2], param.location_win)
                 elif event == cv2.EVENT_MOUSEWHEEL:
                     z = param.zoom
-                    zoom_max = self.g_window_wh[0] / param.image_original.shape[1]
-                    param.zoom = count_zoom(flags, param.step, param.zoom, zoom_max)
+                    zoom_max = self.g_window_wh[0] / \
+                        param.image_original.shape[1]
+                    param.zoom = count_zoom(
+                        flags, param.step, param.zoom, zoom_max)
                     w1, h1 = [int(param.image_original.shape[1] * param.zoom),
                               int(param.image_original.shape[0] * param.zoom)]
-                    param.image_zoom = cv2.resize(param.image_original, (w1, h1), interpolation=cv2.INTER_AREA)
+                    param.image_zoom = cv2.resize(
+                        param.image_original, (w1, h1), interpolation=cv2.INTER_AREA)
                     param.location_win = [int((param.location_win[0] + x) * param.zoom / z - x),
                                           int((param.location_win[1] + y) * param.zoom / z - y)]
                     check_location([w1, h1], [w2, h2], param.location_win)
@@ -136,16 +140,18 @@ class struct_getPoint:
                                               color=(0, 0, 0), thickness=10)
                                 self.true_pixel.append(pr)
 
-                param.image_zoom = cv2.resize(param.image_original, (w1, h1), interpolation=cv2.INTER_AREA)  # 图片缩放
+                param.image_zoom = cv2.resize(
+                    param.image_original, (w1, h1), interpolation=cv2.INTER_AREA)  # 图片缩放
                 param.image_show = param.image_zoom[param.location_win[1]:param.location_win[1] + h2,
-                                   param.location_win[0]:param.location_win[0] + w2]
+                                                    param.location_win[0]:param.location_win[0] + w2]
                 if save_end:
                     circle_end = param.image_original.copy()
                     save_end = False
                 cv2.imshow(param.window_name, param.image_show)
 
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self.window_name, self.g_window_wh[0], self.g_window_wh[1])
+        cv2.resizeWindow(self.window_name,
+                         self.g_window_wh[0], self.g_window_wh[1])
         cv2.imshow(self.window_name, self.image_show)
         cv2.setMouseCallback(self.window_name, mouse_callback, self)
         return
@@ -166,33 +172,39 @@ def read_(img_path: str = None, save_dir: str = "", seds: List[SED] = None,
     """
     # read dataset init
     print("start get picture process step 1/6")
-    img_path = copy_image(img_path, os.path.join(os.path.dirname(__file__), "tmp"))
+    img_path = copy_image(img_path, os.path.join(
+        os.path.dirname(__file__), "tmp"))
     altitude, img_h, img_w, img_c = read_pic(img_path)
-    sen_alt = [compute_sensors_rad(img_h, img_w, altitude, i, sensors_IFOV, uav_IFOV) for i in sensors_altitude]
-    pixel_rad = [compute_pixel_rad(img_h, img_w, altitude, uav_IFOV, i) for i in pixel]
+    sen_alt = [compute_sensors_rad(
+        img_h, img_w, altitude, i, sensors_IFOV, uav_IFOV) for i in sensors_altitude]
+    pixel_rad = [compute_pixel_rad(
+        img_h, img_w, altitude, uav_IFOV, i) for i in pixel]
     print("start get points step 2/6")
-    img = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
-    tmp = struct_getPoint(img, os.path.basename(img_path), sen_alt, pixel_rad, img_h, img_w)
+    img = cv2.imdecode(np.fromfile(
+        img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+    tmp = struct_getPoint(img, os.path.basename(
+        img_path), sen_alt, pixel_rad, img_h, img_w)
     tmp.getPoint()
     while True:
         # wait to exit
         flag = cv2.waitKey(1)
         if flag == ord('s'):
             cv2.destroyAllWindows()
-            cv2.imwrite(os.path.join(save_dir,"con.jpg"), tmp.image_show)
+            cv2.imwrite(os.path.join(save_dir, "con.jpg"), tmp.image_show)
             break
     # data process
     print("start make dataset step 3/6")
-    dm = DataMaker(img_path, tmp.point[:-1], sen_alt, tmp.point[-1], tmp.true_pixel)
+    dm = DataMaker(img_path, tmp.point[:-1],
+                   sen_alt, tmp.point[-1], tmp.true_pixel)
     # data pridict
     print("start predict dataset step 4/6")
-    ans,err = predict(dm.small_path, dm.big_path)
+    ans, err = predict(dm.small_path, dm.big_path)
     # save answer
     print("start concate answer step 5/6")
     out = concate(seds, ans)
     # end
     print("start concate save answer step 6/6")
-    save_csv_png(out, pixel[0:len(tmp.true_pixel)], save_dir, seds,err)
+    save_csv_png(out, pixel[0:len(tmp.true_pixel)], save_dir, seds, err)
     return out, ans, dm
 
 
@@ -211,7 +223,8 @@ def read_tif(img_path: str = None, tiff_path: str = None, save_dir: str = "",
     """
     # read dataset init
     print("start get picture process step 1/7")
-    img_path = copy_image(img_path, os.path.join(os.path.dirname(__file__), "tmp"))
+    img_path = copy_image(img_path, os.path.join(
+        os.path.dirname(__file__), "tmp"))
     imgs = read_tiff(tiff_path)
     img_h, img_w, _ = imgs.shape
 
@@ -220,8 +233,10 @@ def read_tif(img_path: str = None, tiff_path: str = None, save_dir: str = "",
     pixel_rad = [int(i / scale_tiff) for i in pixel]
 
     print("start get points step 2/7")
-    img = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
-    tmp = struct_getPoint(img, os.path.basename(img_path), sen_alt, pixel_rad, img_h, img_w)
+    img = cv2.imdecode(np.fromfile(
+        img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+    tmp = struct_getPoint(img, os.path.basename(
+        img_path), sen_alt, pixel_rad, img_h, img_w)
     tmp.getPoint()
     while True:
         # wait to exit
@@ -238,14 +253,16 @@ def read_tif(img_path: str = None, tiff_path: str = None, save_dir: str = "",
 
     # data process
     print("start make dataset step 4/7")
-    dm = DataMaker(img_path, tmp.point[:-1], sen_alt, tmp.point[-1], tmp.true_pixel)
+    dm = DataMaker(img_path, tmp.point[:-1],
+                   sen_alt, tmp.point[-1], tmp.true_pixel)
     # data pridict
     print("start predict dataset step 5/7")
-    ans,err = predict(dm.small_path, dm.big_path)
+    ans, err = predict(dm.small_path, dm.big_path)
     # save answer
     print("start concate answer step 6/7")
     out = concate(seds, ans)
     # end
     print("start concate save answer step 7/7")
-    save_csv_tif(out, pixel[0:len(tmp.true_pixel)], save_dir, seds_true[0:len(tmp.true_pixel)], seds,err)
+    save_csv_tif(out, pixel[0:len(tmp.true_pixel)], save_dir,
+                 seds_true[0:len(tmp.true_pixel)], seds, err)
     return out, ans, dm
