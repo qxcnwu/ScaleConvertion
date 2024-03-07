@@ -179,19 +179,20 @@ def read_(img_path: str = None, save_dir: str = "", seds: List[SED] = None,
         flag = cv2.waitKey(1)
         if flag == ord('s'):
             cv2.destroyAllWindows()
+            cv2.imwrite(os.path.join(save_dir,"con.jpg"), tmp.image_show)
             break
     # data process
     print("start make dataset step 3/6")
     dm = DataMaker(img_path, tmp.point[:-1], sen_alt, tmp.point[-1], tmp.true_pixel)
     # data pridict
     print("start predict dataset step 4/6")
-    ans = predict(dm.small_path, dm.big_path)
+    ans,err = predict(dm.small_path, dm.big_path)
     # save answer
     print("start concate answer step 5/6")
     out = concate(seds, ans)
     # end
     print("start concate save answer step 6/6")
-    save_csv_png(out, pixel[0:len(tmp.true_pixel)], save_dir, seds)
+    save_csv_png(out, pixel[0:len(tmp.true_pixel)], save_dir, seds,err)
     return out, ans, dm
 
 
@@ -227,6 +228,7 @@ def read_tif(img_path: str = None, tiff_path: str = None, save_dir: str = "",
         flag = cv2.waitKey(1)
         if flag == ord('s'):
             cv2.destroyAllWindows()
+            cv2.imwrite(os.path.join(save_dir, "con.jpg"), tmp.image_show)
             break
 
     # get ref
@@ -239,11 +241,11 @@ def read_tif(img_path: str = None, tiff_path: str = None, save_dir: str = "",
     dm = DataMaker(img_path, tmp.point[:-1], sen_alt, tmp.point[-1], tmp.true_pixel)
     # data pridict
     print("start predict dataset step 5/7")
-    ans = predict(dm.small_path, dm.big_path)
+    ans,err = predict(dm.small_path, dm.big_path)
     # save answer
     print("start concate answer step 6/7")
     out = concate(seds, ans)
     # end
     print("start concate save answer step 7/7")
-    save_csv_tif(out, pixel[0:len(tmp.true_pixel)], save_dir, seds_true[0:len(tmp.true_pixel)], seds)
+    save_csv_tif(out, pixel[0:len(tmp.true_pixel)], save_dir, seds_true[0:len(tmp.true_pixel)], seds,err)
     return out, ans, dm

@@ -1,5 +1,8 @@
+LICENSE
 README.rst
 setup.py
+test.py
+testuav.py
 ScaleConvertion/SC.py
 ScaleConvertion/__init__.py
 ScaleConvertion.egg-info/PKG-INFO
@@ -18,6 +21,7 @@ ScaleConvertion/PicProcess/DataPredict.py
 ScaleConvertion/PicProcess/Draw_Window.py
 ScaleConvertion/PicProcess/MakeData.py
 ScaleConvertion/PicProcess/__init__.py
+ScaleConvertion/PicProcess/save4_0.003732832917032445mt.pth
 ScaleConvertion/Utiles/Info.py
 ScaleConvertion/Utiles/PictureInfo.py
 ScaleConvertion/Utiles/SED.py
@@ -27,3 +31,5 @@ ScaleConvertion/Utiles/__init__.py
 ScaleConvertion/test/__init__.py
 ScaleConvertion/test/test.py
 ScaleConvertion/test/testuav.py
+tmp/2.csv
+tmp/4.csv

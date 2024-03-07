@@ -77,13 +77,14 @@ class WindowAttention(nn.Module):
     """
 
     def __init__(self, dim, window_size, num_heads, qkv_bias=True, attn_drop=0., proj_drop=0.,
-                 pretrained_window_size=[0, 0]):
+                 pretrained_window_size=[0, 0], device=None):
 
         super().__init__()
         self.dim = dim
         self.window_size = window_size  # Wh, Ww
         self.pretrained_window_size = pretrained_window_size
         self.num_heads = num_heads
+        self.device = device
 
         self.logit_scale = nn.Parameter(torch.log(10 * torch.ones((num_heads, 1, 1))), requires_grad=True)
 
@@ -151,7 +152,7 @@ class WindowAttention(nn.Module):
 
         # cosine attention
         attn = (F.normalize(q, dim=-1) @ F.normalize(k, dim=-1).transpose(-2, -1))
-        logit_scale = torch.clamp(self.logit_scale, max=torch.log(torch.tensor(1. / 0.01, device="cpu"))).exp()
+        logit_scale = torch.clamp(self.logit_scale, max=torch.log(torch.tensor(1. / 0.01, device=self.device))).exp()
         attn = attn * logit_scale
 
         relative_position_bias_table = self.cpb_mlp(self.relative_coords_table).view(-1, self.num_heads)
@@ -197,7 +198,7 @@ class SwinTransformerBlock(nn.Module):
 
     def __init__(self, dim, input_resolution, num_heads, window_size=7, shift_size=0,
                  mlp_ratio=4., qkv_bias=True, drop=0., attn_drop=0., drop_path=0.,
-                 act_layer=nn.GELU, norm_layer=nn.LayerNorm, pretrained_window_size=0):
+                 act_layer=nn.GELU, norm_layer=nn.LayerNorm, pretrained_window_size=0, device=None):
         super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
@@ -215,7 +216,7 @@ class SwinTransformerBlock(nn.Module):
         self.attn = WindowAttention(
             dim, window_size=to_2tuple(self.window_size), num_heads=num_heads,
             qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop,
-            pretrained_window_size=to_2tuple(pretrained_window_size))
+            pretrained_window_size=to_2tuple(pretrained_window_size), device=device)
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
@@ -290,6 +291,7 @@ class ResNet(nn.Module):
             self,
             block: Type[Union[BasicBlock, Bottleneck]],
             layers: List[int],
+            device: Any,
             zero_init_residual: bool = False,
             groups: int = 1,
             width_per_group: int = 64,
@@ -347,7 +349,7 @@ class ResNet(nn.Module):
                                           drop=0, attn_drop=0,
                                           drop_path=0,
                                           norm_layer=nn.LayerNorm,
-                                          pretrained_window_size=0)
+                                          pretrained_window_size=0,device=device)
 
         self.norm = nn.BatchNorm1d(49)
 
@@ -464,15 +466,16 @@ def _resnet(
         layers: List[int],
         weights,
         progress: bool,
+        device: Any,
         **kwargs: Any,
 ) -> ResNet:
-    model = ResNet(block, layers, **kwargs)
+    model = ResNet(block, layers, device, **kwargs)
     if weights is not None:
         model.load_state_dict(weights.get_state_dict(progress=progress))
     return model
 
 
-def resnet18(*, weights=None, progress: bool = True, **kwargs: Any) -> ResNet:
+def resnet18(*, weights=None, progress: bool = True, device=None, **kwargs: Any) -> ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     Args:
@@ -491,7 +494,7 @@ def resnet18(*, weights=None, progress: bool = True, **kwargs: Any) -> ResNet:
     .. autoclass:: torchvision.models.ResNet18_Weights
         :members:
     """
-    return _resnet(BasicBlock, [2, 2, 2, 2], weights, progress, **kwargs)
+    return _resnet(BasicBlock, [2, 2, 2, 2], weights, progress, device, **kwargs)
 
 
 def resnet34(*, weights=None, progress: bool = True, **kwargs: Any) -> ResNet:

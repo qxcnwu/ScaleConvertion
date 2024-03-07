@@ -70,7 +70,7 @@ def getOneValidationData(small_path: str, big_path: List[str]):
     return bigPic, smallPic.astype(np.float32), big_Pic_gray, arr
 
 
-def predict(small_path: str, big_path: List[str], device: str = "cpu"):
+def predict(small_path: str, big_path: List[str], device: str = "cuda"):
     """
     predict answer
     :param device:
@@ -78,14 +78,17 @@ def predict(small_path: str, big_path: List[str], device: str = "cpu"):
     :param big_path:
     :return:
     """
-    bigPics, small,big_Pic_gray, arr = getOneValidationData(small_path, big_path)
+    bigPics, small, big_Pic_gray, arr = getOneValidationData(
+        small_path, big_path)
     model_path = os.path.join(os.path.dirname(
         __file__), "save4_0.003732832917032445mt.pth")
-    model = resnet18()
     if torch.cuda.is_available() and device == "cuda":
         device = torch.device("cuda")
+        dev = "cuda"
     else:
         device = torch.device("cpu")
+        dev = "cpu"
+    model = resnet18(device=dev)
     if os.path.exists(model_path):
         model.load_state_dict(torch.load(model_path, map_location=device.type))
     else:
@@ -98,8 +101,9 @@ def predict(small_path: str, big_path: List[str], device: str = "cpu"):
     model = model.to(device)
     model.eval()
     ans = []
+    err = []
     with torch.no_grad():
-        for bigPic,bt in zip(bigPics,big_Pic_gray):
+        for bigPic, bt in zip(bigPics, big_Pic_gray):
             x_batch1 = Variable(torch.from_numpy(
                 np.expand_dims(bigPic, axis=0))).to(device=device)
             x_batch2 = Variable(torch.from_numpy(
@@ -107,5 +111,7 @@ def predict(small_path: str, big_path: List[str], device: str = "cpu"):
             output = model(x_batch1, x_batch2)
             output = output.detach().cpu().numpy()
             ans.append(output[0])
-            print("true:", bt, "pred:", np.mean(output[0] * arr),"simple average:",np.mean(arr))
-    return ans
+            err.append(abs(np.mean(output[0] * arr)-bt)/bt*100)
+            print("true:", bt, "pred:", np.mean(
+                output[0] * arr), "simple average:", np.mean(arr))
+    return ans, err

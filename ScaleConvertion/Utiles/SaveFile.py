@@ -19,7 +19,7 @@ plugin_path = os.path.join(dirname, 'Qt', 'plugins', 'platforms')
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
 
-def save_csv_png(refs: List[np.array], altitudes: List[float], save_dir: str, seds: List[np.array]):
+def save_csv_png(refs: List[np.array], altitudes: List[float], save_dir: str, seds: List[np.array], errs: List[float]):
     """
     save ref to csv
     :param refs:
@@ -28,20 +28,23 @@ def save_csv_png(refs: List[np.array], altitudes: List[float], save_dir: str, se
     :return:
     """
     # draw simple average
-    plt.plot([i for i in range(350, 2501)], np.mean(np.array(seds), axis=0), label="simple average", linestyle='--')
+    plt.plot([i for i in range(350, 2501)], np.mean(
+        np.array(seds), axis=0), label="simple average", linestyle='--')
     # draw predict
-    for ref, alt in zip(refs, altitudes):
-        pd.DataFrame(np.mean(ref, axis=1)).to_csv(os.path.join(save_dir, str(alt) + ".csv"))
-        plt.plot([i for i in range(350, 2501)], np.mean(ref, axis=1), label=str(alt) + "m")
+    for ref, alt, err in zip(refs, altitudes, errs):
+        pd.DataFrame(np.mean(ref, axis=1)).to_csv(
+            os.path.join(save_dir, str(alt)+"_"+str(err) + ".csv"))
+        plt.plot([i for i in range(350, 2501)], np.mean(
+            ref, axis=1), label=str(alt) + "m")
     plt.legend()
     plt.ylabel("ref")
     plt.xlabel("wavelength/nm")
-    plt.show()
+    plt.savefig(os.path.join(save_dir, "draw.png"))
     return
 
 
 def save_csv_tif(refs: List[np.array], altitudes: List[float], save_dir: str, trues: List[np.array],
-                 seds: List[np.array]):
+                 seds: List[np.array], errs: List[float]):
     """
     save ref to csv
     :param refs:
@@ -53,19 +56,24 @@ def save_csv_tif(refs: List[np.array], altitudes: List[float], save_dir: str, tr
     colors = list(red.range_to(Color("blue"), len(altitudes) + 1))
     colors = [c.get_rgb() for c in colors]
     # draw simple average
-    plt.plot([i for i in range(0, len(seds[0]))], np.mean(np.array(seds), axis=0), label="simple average", c=colors[0])
+    plt.plot([i for i in range(0, len(seds[0]))], np.mean(
+        np.array(seds), axis=0), label="simple average", c=colors[0])
     i = 1
     # draw predict
-    for ref, ref_true, alt in zip(refs, trues, altitudes):
-        pd.DataFrame([np.mean(ref, axis=1), ref_true]).to_csv(os.path.join(save_dir, str(alt) + ".csv"))
-        plt.plot([i for i in range(0, len(seds[0]))], np.mean(ref, axis=1), label=str(alt) + "m pred", c=colors[i])
-        plt.plot([i for i in range(0, len(seds[0]))], ref_true, label=str(alt) + "m true", c=colors[i], linestyle='--')
+    for ref, alt, err in zip(refs, altitudes, errs):
+        pd.DataFrame(np.mean(ref, axis=1)).to_csv(
+            os.path.join(save_dir, str(alt)+"_"+str(err) + ".csv"))
+        plt.plot([i for i in range(0, len(seds[0]))], np.mean(
+            ref, axis=1), label=str(alt) + "m pred", c=colors[i])
+        plt.plot([i for i in range(0, len(seds[0]))], ref_true,
+                 label=str(alt) + "m true", c=colors[i], linestyle='--')
         i += 1
     plt.legend()
     plt.ylabel("ref")
     plt.xlabel("wavelength/nm")
-    plt.show()
+    plt.savefig(os.path.join(save_dir, "draw.png"))
     return
+
 
 def chose(name):
     """
